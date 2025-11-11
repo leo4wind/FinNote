@@ -1,0 +1,1081 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简记账</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .balance {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .form-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .records-section {
+            padding: 30px;
+        }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .record-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .income {
+            border-left: 4px solid #28a745;
+        }
+
+        .expense {
+            border-left: 4px solid #dc3545;
+        }
+
+        .record-info {
+            flex: 1;
+        }
+
+        .record-amount {
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .income .record-amount {
+            color: #28a745;
+        }
+
+        .expense .record-amount {
+            color: #dc3545;
+        }
+
+        .record-meta {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 0 10px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #e9ecef;
+            background: white;
+            color: #495057;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* 浮动添加按钮 */
+        .floating-add-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 32px;
+            border: 2px solid white;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+            transition: all 0.3s;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .floating-add-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.8);
+        }
+
+        .floating-add-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* 模态框 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #495057;
+            font-size: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 32px;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: #f8f9fa;
+            color: #495057;
+        }
+
+        .modal-body {
+            padding: 20px 30px;
+        }
+
+        #modalRecordForm,
+        #confirmModal .form-actions {
+            padding: 20px 30px;
+        }
+
+        /* 确认码输入 */
+        .confirm-code-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-align: center;
+            transition: border-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .confirm-code-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .floating-add-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 28px;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+
+            .modal-header,
+            .modal-body,
+            #modalRecordForm,
+            #confirmModal .form-actions {
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>极简记账</h1>
+            <div class="balance" id="balance">¥0.00</div>
+            <div class="summary">
+                <div class="summary-item">
+                    <div class="summary-label">收入</div>
+                    <div class="summary-value" id="totalIncome" style="color: #28a745;">¥0.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">支出</div>
+                    <div class="summary-value" id="totalExpense" style="color: #dc3545;">¥0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div id="message"></div>
+            <form id="searchForm" style="margin-bottom: 0;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div class="form-group">
+                        <label for="startDate">开始日期</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">结束日期</label>
+                        <input type="date" id="endDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchType">类型</label>
+                        <select id="searchType">
+                            <option value="">全部</option>
+                            <option value="income">收入</option>
+                            <option value="expense" selected>支出</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="searchRemark">备注关键词</label>
+                        <input type="text" id="searchRemark" placeholder="模糊搜索">
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary">搜索</button>
+                    <button type="button" class="btn btn-secondary" id="resetBtn">重置</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="records-section">
+            <h2 style="margin-bottom: 20px; color: #495057;">收支记录</h2>
+            <div id="loading" class="loading">加载中...</div>
+            <div id="recordsList"></div>
+            <div id="pagination" class="pagination hidden">
+                <button id="prevBtn" class="page-btn">上一页</button>
+                <span class="pagination-info" id="pageInfo">第 1 页，共 1 页，共 0 条记录</span>
+                <button id="nextBtn" class="page-btn">下一页</button>
+            </div>
+        </div>
+
+        <!-- 浮动添加按钮 -->
+        <button id="floatingAddBtn" class="floating-add-btn">+</button>
+
+        <!-- 添加/编辑记录模态框 -->
+        <div id="recordModal" class="modal hidden" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalTitle">添加记录</h3>
+                    <button class="modal-close" id="modalCloseBtn">&times;</button>
+                </div>
+                <form id="modalRecordForm">
+                    <input type="hidden" id="modalRecordId" />
+
+                    <div class="form-group">
+                        <label for="modalType">类型</label>
+                        <select id="modalType" required>
+                            <option value="income">收入</option>
+                            <option value="expense" selected>支出</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalAmount">金额</label>
+                        <input type="number" id="modalAmount" step="0.01" placeholder="0.00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalRemark">备注（可选）</label>
+                        <input type="text" id="modalRemark" maxlength="30" placeholder="请输入备注">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="modalSubmitBtn">添加记录</button>
+                        <button type="button" class="btn btn-secondary" id="modalCancelBtn">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 确认码验证模态框 -->
+        <div id="confirmModal" class="modal hidden" style="display: none;">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3 id="confirmTitle">确认操作</h3>
+                    <button class="modal-close" id="confirmCloseBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage">请输入8位确认码：</p>
+                    <input type="password" id="confirmCode" maxlength="8" placeholder="请输入8位确认码" class="confirm-code-input">
+                    <div id="confirmError" class="error-message hidden">确认码错误</div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-primary" id="confirmSubmitBtn">确认</button>
+                    <button type="button" class="btn btn-secondary" id="confirmCancelBtn">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API配置 - 自动根据环境切换
+        const API_CONFIG = {
+            // 开发环境（本地）
+            development: {
+                baseURL: 'http://127.0.0.1:8001'
+            },
+            // 生产环境（GitHub Pages）
+            production: {
+                baseURL: 'https://your-server.com'  // 请替换为你的云服务器地址
+            }
+        };
+
+        // 自动判断当前环境
+        function getCurrentEnvironment() {
+            const hostname = window.location.hostname;
+            return (hostname === 'localhost' || hostname === '127.0.0.1') ? 'development' : 'production';
+        }
+
+        // 获取当前环境的API配置
+        function getApiConfig() {
+            const env = getCurrentEnvironment();
+            console.log(`当前环境: ${env}`);
+            return API_CONFIG[env];
+        }
+
+        // API客户端
+        class ApiClient {
+            constructor() {
+                this.config = getApiConfig();
+            }
+
+            async request(url, options = {}) {
+                const fullUrl = `${this.config.baseURL}${url}`;
+
+                try {
+                    const response = await fetch(fullUrl, {
+                        ...options,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ message: '请求失败' }));
+                        throw new Error(error.message || `HTTP error! status: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('API请求错误:', error);
+                    throw error;
+                }
+            }
+
+            async getRecords(params = {}) {
+                const queryString = new URLSearchParams(params).toString();
+                const url = `/api/v1/records${queryString ? '?' + queryString : ''}`;
+                const response = await this.request(url);
+                return { data: response.data || [], total: response.total || 0 };
+            }
+
+            async createRecord(data) {
+                return this.request('/api/v1/records', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            }
+
+            async updateRecord(id, data) {
+                return this.request(`/api/v1/records/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data)
+                });
+            }
+
+            async deleteRecord(id) {
+                return this.request(`/api/v1/records/${id}`, {
+                    method: 'DELETE'
+                });
+            }
+
+            async healthCheck() {
+                return this.request('/health');
+            }
+        }
+
+        // 初始化API客户端
+        const api = new ApiClient();
+
+        // 分页状态
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalRecords = 0;
+        let searchParams = {};
+
+        // 确认码配置
+        const CONFIRM_CODE = '88888888';
+
+        // DOM元素
+        const recordForm = document.getElementById('recordForm');
+        const recordsList = document.getElementById('recordsList');
+        const loading = document.getElementById('loading');
+        const message = document.getElementById('message');
+        const balanceEl = document.getElementById('balance');
+        const totalIncomeEl = document.getElementById('totalIncome');
+        const totalExpenseEl = document.getElementById('totalExpense');
+        const recordIdInput = document.getElementById('recordId');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // 模态框元素
+        const floatingAddBtn = document.getElementById('floatingAddBtn');
+        const recordModal = document.getElementById('recordModal');
+        const confirmModal = document.getElementById('confirmModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const modalRecordForm = document.getElementById('modalRecordForm');
+        const modalRecordId = document.getElementById('modalRecordId');
+        const modalType = document.getElementById('modalType');
+        const modalAmount = document.getElementById('modalAmount');
+        const modalRemark = document.getElementById('modalRemark');
+        const modalSubmitBtn = document.getElementById('modalSubmitBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+        // 确认码相关元素
+        const confirmCloseBtn = document.getElementById('confirmCloseBtn');
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmCodeInput = document.getElementById('confirmCode');
+        const confirmError = document.getElementById('confirmError');
+        const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+        // 确认码验证回调
+        let pendingConfirmAction = null;
+
+        // 显示消息
+        function showMessage(text, type = 'error') {
+            message.className = type;
+            message.textContent = text;
+            setTimeout(() => {
+                message.className = 'hidden';
+            }, 3000);
+        }
+
+        // 打开添加记录模态框
+        function openAddModal() {
+            console.log('openAddModal被调用');
+            modalTitle.textContent = '添加记录';
+            modalSubmitBtn.textContent = '添加记录';
+            modalRecordForm.reset();
+            modalType.value = 'expense'; // 重置时默认选择支出
+            modalRecordId.value = '';
+            recordModal.classList.remove('hidden');
+            recordModal.style.display = 'flex';
+        }
+
+        // 打开编辑记录模态框
+        function openEditModal(id, type, amount, remark) {
+            modalTitle.textContent = '编辑记录';
+            modalSubmitBtn.textContent = '更新记录';
+            modalRecordId.value = id;
+            modalType.value = type;
+            modalAmount.value = amount;
+            modalRemark.value = remark;
+            recordModal.classList.remove('hidden');
+            recordModal.style.display = 'flex';
+        }
+
+        // 关闭模态框
+        function closeModal(modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+        }
+
+        // 设置默认查询日期
+        function setDefaultSearchDates() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            document.getElementById('startDate').value = formatDate(thirtyDaysAgo);
+            document.getElementById('endDate').value = formatDate(tomorrow);
+        }
+
+        // 显示确认码验证框
+        function showConfirmBox(title, message, callback) {
+            console.log('showConfirmBox被调用:', title, message);
+            confirmTitle.textContent = title;
+            confirmMessage.textContent = message;
+            confirmCodeInput.value = '';
+            confirmError.classList.add('hidden');
+            pendingConfirmAction = callback;
+            confirmModal.classList.remove('hidden');
+            confirmModal.style.display = 'flex';
+            confirmCodeInput.focus();
+        }
+
+        // 验证确认码
+        function verifyConfirmCode() {
+            const code = confirmCodeInput.value;
+            if (code === CONFIRM_CODE) {
+                closeModal(confirmModal);
+                if (pendingConfirmAction) {
+                    const action = pendingConfirmAction;
+                    pendingConfirmAction = null;
+                    action();
+                }
+            } else {
+                confirmError.classList.remove('hidden');
+                confirmCodeInput.focus();
+            }
+        }
+
+        // 加载记录
+        async function loadRecords() {
+            try {
+                loading.classList.remove('hidden');
+                recordsList.innerHTML = '';
+
+                // 构建查询参数
+                const params = {
+                    page: currentPage,
+                    page_size: pageSize,
+                    ...searchParams
+                };
+
+                const result = await api.getRecords(params);
+                const records = result.data;
+                totalRecords = result.total;
+
+                displayRecords(records);
+                updateSummary(records);
+            } catch (error) {
+                showMessage(`加载失败: ${error.message}`);
+                recordsList.innerHTML = '<div class="empty-state">加载失败，请检查后端服务</div>';
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // 显示记录列表
+        function displayRecords(records) {
+            // 确保 records 是数组
+            if (!Array.isArray(records)) {
+                console.error('API返回的数据不是数组:', records);
+                recordsList.innerHTML = '<div class="empty-state">数据格式错误，请检查后端服务</div>';
+                updatePagination(0, 0, 0);
+                return;
+            }
+
+            if (records.length === 0) {
+                recordsList.innerHTML = '<div class="empty-state">暂无记录，请添加您的第一笔收支</div>';
+                updatePagination(0, 0, 0);
+                return;
+            }
+
+            recordsList.innerHTML = records.map(record => `
+                <div class="record-item ${record.type}">
+                    <div class="record-info">
+                        <div style="display: flex; align-items: center;">
+                            <span class="record-amount">
+                                ${record.type === 'income' ? '+' : '-'}¥${parseFloat(record.amount).toFixed(2)}
+                            </span>
+                            <span style="color: #495057;">${record.remark || '无备注'}</span>
+                        </div>
+                        <div class="record-meta">
+                            ${new Date(record.timestamp).toLocaleString('zh-CN')}
+                        </div>
+                    </div>
+                    <div class="record-actions">
+                        <button class="btn btn-warning" onclick="editRecord('${record.id}', '${record.type}', ${record.amount}, '${record.remark || ''}')">编辑</button>
+                        <button class="btn btn-danger" onclick="deleteRecord('${record.id}')">删除</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // 更新分页信息（需要从后端返回的总记录数计算）
+            // 这里暂时使用当前页记录数
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            updatePagination(currentPage, totalPages, totalRecords);
+        }
+
+        // 更新分页信息
+        function updatePagination(page, totalPages, total) {
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pagination = document.getElementById('pagination');
+
+            if (total === 0) {
+                pagination.classList.add('hidden');
+                return;
+            }
+
+            pagination.classList.remove('hidden');
+            pageInfo.textContent = `第 ${page} 页，共 ${totalPages} 页，共 ${total} 条记录`;
+
+            prevBtn.disabled = page <= 1;
+            nextBtn.disabled = page >= totalPages;
+        }
+
+        // 更新汇总
+        function updateSummary(records) {
+            const income = records
+                .filter(r => r.type === 'income')
+                .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+
+            const expense = records
+                .filter(r => r.type === 'expense')
+                .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+
+            const balance = income - expense;
+
+            balanceEl.textContent = `¥${balance.toFixed(2)}`;
+            totalIncomeEl.textContent = `¥${income.toFixed(2)}`;
+            totalExpenseEl.textContent = `¥${expense.toFixed(2)}`;
+        }
+
+        // 编辑记录
+        window.editRecord = function (id, type, amount, remark) {
+            showConfirmBox('编辑记录', '请输入8位确认码以继续编辑', () => {
+                openEditModal(id, type, amount, remark);
+            });
+        };
+
+        // 删除记录
+        window.deleteRecord = function (id) {
+            showConfirmBox('删除记录', '请输入8位确认码以确认删除', async () => {
+                try {
+                    await api.deleteRecord(id);
+                    showMessage('删除成功', 'success');
+                    await loadRecords();
+                } catch (error) {
+                    showMessage(`删除失败: ${error.message}`);
+                }
+            });
+        };
+
+        // 搜索表单事件
+        const searchForm = document.getElementById('searchForm');
+        const resetBtn = document.getElementById('resetBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // 搜索提交
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 获取搜索条件
+            searchParams = {};
+            const type = document.getElementById('searchType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const remark = document.getElementById('searchRemark').value;
+
+            if (type) searchParams.type = type;
+            if (startDate) searchParams.start_date = startDate;
+            if (endDate) searchParams.end_date = endDate;
+            if (remark) searchParams.remark = remark;
+
+            currentPage = 1; // 重置到第一页
+            await loadRecords();
+        });
+
+        // 重置搜索
+        resetBtn.addEventListener('click', async () => {
+            document.getElementById('searchType').value = '';
+            document.getElementById('searchRemark').value = '';
+            setDefaultSearchDates(); // 恢复默认日期
+            searchParams = {};
+            currentPage = 1;
+            await loadRecords();
+        });
+
+        // 分页按钮
+        prevBtn.addEventListener('click', async () => {
+            if (currentPage > 1) {
+                currentPage--;
+                await loadRecords();
+            }
+        });
+
+        nextBtn.addEventListener('click', async () => {
+            currentPage++;
+            await loadRecords();
+        });
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 确保模态框在页面加载时是隐藏的
+            recordModal.classList.add('hidden');
+            confirmModal.classList.add('hidden');
+            recordModal.style.display = 'none';
+            confirmModal.style.display = 'none';
+            console.log('页面加载完成，模态框已隐藏');
+
+            // 设置默认查询条件
+            setDefaultSearchDates();
+
+            // 使用setTimeout确保DOM更新完成
+            setTimeout(() => {
+                // 从UI读取默认值并更新searchParams
+                const type = document.getElementById('searchType').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const remark = document.getElementById('searchRemark').value;
+
+                if (type) searchParams.type = type;
+                if (startDate) searchParams.start_date = startDate;
+                if (endDate) searchParams.end_date = endDate;
+                if (remark) searchParams.remark = remark;
+
+                console.log('默认搜索参数:', searchParams);
+                loadRecords();
+            }, 0);
+
+            // 健康检查
+            api.healthCheck().then(() => {
+                console.log('后端服务连接正常');
+            }).catch(err => {
+                console.warn('后端服务连接异常:', err.message);
+                showMessage('无法连接后端服务，请确保后端运行并配置CORS');
+            });
+
+            // 使用setTimeout延迟绑定事件监听器，确保页面完全稳定
+            setTimeout(() => {
+                console.log('开始绑定事件监听器...');
+
+                // 浮动添加按钮
+                floatingAddBtn.addEventListener('click', () => {
+                    console.log('浮动按钮被点击');
+                    openAddModal();
+                });
+
+                // 模态框关闭事件
+                modalCloseBtn.addEventListener('click', () => closeModal(recordModal));
+                modalCancelBtn.addEventListener('click', () => closeModal(recordModal));
+                confirmCloseBtn.addEventListener('click', () => closeModal(confirmModal));
+                confirmCancelBtn.addEventListener('click', () => closeModal(confirmModal));
+
+                // 点击模态框外部关闭
+                recordModal.addEventListener('click', (e) => {
+                    if (e.target === recordModal) closeModal(recordModal);
+                });
+                confirmModal.addEventListener('click', (e) => {
+                    if (e.target === confirmModal) closeModal(confirmModal);
+                });
+
+                // 模态框表单提交
+                modalRecordForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const type = modalType.value;
+                    const amount = parseFloat(modalAmount.value);
+                    const remark = modalRemark.value;
+                    const recordId = modalRecordId.value;
+
+                    if (!amount || amount <= 0) {
+                        showMessage('请输入有效金额');
+                        return;
+                    }
+
+                    try {
+                        const data = { type, amount, remark };
+
+                        if (recordId) {
+                            // 更新模式
+                            await api.updateRecord(recordId, data);
+                            showMessage('更新成功', 'success');
+                        } else {
+                            // 创建模式
+                            await api.createRecord(data);
+                            showMessage('添加成功', 'success');
+                        }
+
+                        closeModal(recordModal);
+                        await loadRecords();
+                    } catch (error) {
+                        showMessage(`操作失败: ${error.message}`);
+                    }
+                });
+
+                // 确认码验证
+                confirmSubmitBtn.addEventListener('click', verifyConfirmCode);
+                confirmCodeInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        verifyConfirmCode();
+                    }
+                });
+
+                // ESC键关闭模态框
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        if (!recordModal.classList.contains('hidden')) {
+                            closeModal(recordModal);
+                        }
+                        if (!confirmModal.classList.contains('hidden')) {
+                            closeModal(confirmModal);
+                        }
+                    }
+                });
+
+                console.log('事件监听器绑定完成');
+            }, 100); // 延迟100ms
+        });
+    </script>
+</body>
+
+</html>

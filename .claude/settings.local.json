@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init)",
+      "Bash(git remote add origin https://github.com/leo4wind/FinNote.git)",
+      "Bash(git config user.email \"leo4wind@example.com\")",
+      "Bash(git config user.name \"leo4wind\")",
+      "Bash(git add .)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
