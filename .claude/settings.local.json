@@ -5,7 +5,10 @@
       "Bash(git remote add origin https://github.com/leo4wind/FinNote.git)",
       "Bash(git config user.email \"leo4wind@example.com\")",
       "Bash(git config user.name \"leo4wind\")",
-      "Bash(git add .)"
+      "Bash(git add .)",
+      "Bash(git commit -m \"feat: 完成记账应用开发\n\n- 新增分页和查询功能\n- 支持按类型、日期范围、备注搜索\n- 添加浮动添加按钮\n- 实现模态框表单\n- 新增8位确认码验证（编辑/删除需输入）\n- 设置默认查询条件：最近30天到明天，默认类型为支出\n- 优化用户体验和界面设计\n- 支持添加、编辑、删除记录功能\")",
+      "Bash(git branch -M main)",
+      "Bash(git push -u origin main)"
     ],
     "deny": [],
     "ask": []

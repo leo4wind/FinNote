@@ -322,8 +322,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .modal-content {
@@ -341,6 +346,7 @@
                 transform: translateY(50px);
                 opacity: 0;
             }
+
             to {
                 transform: translateY(0);
                 opacity: 1;
@@ -547,7 +553,8 @@
                 </div>
                 <div class="modal-body">
                     <p id="confirmMessage">请输入8位确认码：</p>
-                    <input type="password" id="confirmCode" maxlength="8" placeholder="请输入8位确认码" class="confirm-code-input">
+                    <input type="password" id="confirmCode" maxlength="8" placeholder="请输入8位确认码"
+                        class="confirm-code-input">
                     <div id="confirmError" class="error-message hidden">确认码错误</div>
                 </div>
                 <div class="form-actions">
@@ -567,7 +574,7 @@
             },
             // 生产环境（GitHub Pages）
             production: {
-                baseURL: 'https://your-server.com'  // 请替换为你的云服务器地址
+                baseURL: 'http://175.178.252.30/acc'  // 请替换为你的云服务器地址
             }
         };
 
