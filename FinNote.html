@@ -431,6 +431,10 @@
                 font-size: 28px;
             }
 
+            .desktop-only {
+                display: none !important;
+            }
+
             .modal-content {
                 width: 95%;
             }
@@ -440,6 +444,13 @@
             #modalRecordForm,
             #confirmModal .form-actions {
                 padding: 15px 20px;
+            }
+        }
+
+        /* 桌面端样式 */
+        @media (min-width: 641px) {
+            .floating-add-btn {
+                display: none;
             }
         }
     </style>
@@ -466,11 +477,11 @@
             <div id="message"></div>
             <form id="searchForm" style="margin-bottom: 0;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                    <div class="form-group">
+                    <div class="form-group desktop-only">
                         <label for="startDate">开始日期</label>
                         <input type="date" id="startDate">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group desktop-only">
                         <label for="endDate">结束日期</label>
                         <input type="date" id="endDate">
                     </div>
@@ -490,6 +501,7 @@
                 <div class="form-actions" style="margin-top: 15px;">
                     <button type="submit" class="btn btn-primary">搜索</button>
                     <button type="button" class="btn btn-secondary" id="resetBtn">重置</button>
+                    <button type="button" class="btn btn-primary desktop-only" id="desktopAddBtn">+ 添加记录</button>
                 </div>
             </form>
         </div>
@@ -648,6 +660,11 @@
                 });
             }
 
+            async getSummary() {
+                const response = await this.request('/api/v1/summary');
+                return response.data;
+            }
+
             async healthCheck() {
                 return this.request('/health');
             }
@@ -679,6 +696,7 @@
 
         // 模态框元素
         const floatingAddBtn = document.getElementById('floatingAddBtn');
+        const desktopAddBtn = document.getElementById('desktopAddBtn');
         const recordModal = document.getElementById('recordModal');
         const confirmModal = document.getElementById('confirmModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -808,12 +826,22 @@
                 totalRecords = result.total;
 
                 displayRecords(records);
-                updateSummary(records);
             } catch (error) {
                 showMessage(`加载失败: ${error.message}`);
                 recordsList.innerHTML = '<div class="empty-state">加载失败，请检查后端服务</div>';
             } finally {
                 loading.classList.add('hidden');
+            }
+        }
+
+        // 加载汇总信息
+        async function loadSummary() {
+            try {
+                const summary = await api.getSummary();
+                updateSummary(summary);
+            } catch (error) {
+                console.error('加载汇总信息失败:', error);
+                // 不显示错误提示，避免影响用户体验
             }
         }
 
@@ -879,16 +907,10 @@
         }
 
         // 更新汇总
-        function updateSummary(records) {
-            const income = records
-                .filter(r => r.type === 'income')
-                .reduce((sum, r) => sum + parseFloat(r.amount), 0);
-
-            const expense = records
-                .filter(r => r.type === 'expense')
-                .reduce((sum, r) => sum + parseFloat(r.amount), 0);
-
-            const balance = income - expense;
+        function updateSummary(summaryData) {
+            const income = summaryData.total_income || 0;
+            const expense = summaryData.total_expense || 0;
+            const balance = summaryData.balance || 0;
 
             balanceEl.textContent = `¥${balance.toFixed(2)}`;
             totalIncomeEl.textContent = `¥${income.toFixed(2)}`;
@@ -909,6 +931,7 @@
                     await api.deleteRecord(id);
                     showMessage('删除成功', 'success');
                     await loadRecords();
+                    await loadSummary();
                 } catch (error) {
                     showMessage(`删除失败: ${error.message}`);
                 }
@@ -939,6 +962,7 @@
 
             currentPage = 1; // 重置到第一页
             await loadRecords();
+            await loadSummary();
         });
 
         // 重置搜索
@@ -949,6 +973,28 @@
             searchParams = {};
             currentPage = 1;
             await loadRecords();
+            await loadSummary();
+        });
+
+        // 类型选择自动搜索（特别针对移动端）
+        document.getElementById('searchType').addEventListener('change', async (e) => {
+            e.preventDefault();
+
+            // 获取搜索条件
+            searchParams = {};
+            const type = e.target.value;
+            const startDate = document.getElementById('startDate')?.value;
+            const endDate = document.getElementById('endDate')?.value;
+            const remark = document.getElementById('searchRemark').value;
+
+            if (type) searchParams.type = type;
+            if (startDate) searchParams.start_date = startDate;
+            if (endDate) searchParams.end_date = endDate;
+            if (remark) searchParams.remark = remark;
+
+            currentPage = 1; // 重置到第一页
+            await loadRecords();
+            await loadSummary();
         });
 
         // 分页按钮
@@ -956,12 +1002,14 @@
             if (currentPage > 1) {
                 currentPage--;
                 await loadRecords();
+                await loadSummary();
             }
         });
 
         nextBtn.addEventListener('click', async () => {
             currentPage++;
             await loadRecords();
+            await loadSummary();
         });
 
         // 页面加载时初始化
@@ -991,6 +1039,7 @@
 
                 console.log('默认搜索参数:', searchParams);
                 loadRecords();
+                loadSummary();
             }, 0);
 
             // 健康检查
@@ -1005,11 +1054,21 @@
             setTimeout(() => {
                 console.log('开始绑定事件监听器...');
 
-                // 浮动添加按钮
-                floatingAddBtn.addEventListener('click', () => {
-                    console.log('浮动按钮被点击');
-                    openAddModal();
-                });
+                // 浮动添加按钮（移动端）
+                if (floatingAddBtn) {
+                    floatingAddBtn.addEventListener('click', () => {
+                        console.log('浮动按钮被点击');
+                        openAddModal();
+                    });
+                }
+
+                // 桌面端添加按钮
+                if (desktopAddBtn) {
+                    desktopAddBtn.addEventListener('click', () => {
+                        console.log('桌面端添加按钮被点击');
+                        openAddModal();
+                    });
+                }
 
                 // 模态框关闭事件
                 modalCloseBtn.addEventListener('click', () => closeModal(recordModal));
@@ -1054,6 +1113,7 @@
 
                         closeModal(recordModal);
                         await loadRecords();
+                        await loadSummary();
                     } catch (error) {
                         showMessage(`操作失败: ${error.message}`);
                     }
