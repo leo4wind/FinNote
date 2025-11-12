@@ -634,7 +634,7 @@
         </div>
 
         <div class="records-section">
-            <h2 style="margin-bottom: 20px; color: #495057;">收支记录</h2>
+            <h2 style="margin-bottom: 20px; color: #495057;">收支记录 <span id="recordsSummary" style="font-size: 14px; font-weight: normal; color: #dc3545;"></span></h2>
             <div id="loading" class="loading">加载中...</div>
             <div id="recordsList"></div>
             <div id="pagination" class="pagination hidden">
@@ -985,8 +985,15 @@
             if (records.length === 0) {
                 recordsList.innerHTML = '<div class="empty-state">暂无记录，请添加您的第一笔收支</div>';
                 updatePagination(0, 0, 0);
+                updateRecordsSummary([], null, null);
                 return;
             }
+
+            // 检查是否显示前30天支出合计
+            const activeTypeBtn = document.querySelector('.type-btn.active');
+            const activeRangeBtn = document.querySelector('.time-range-btn.active');
+            const currentType = activeTypeBtn?.dataset.type || '';
+            const currentRange = activeRangeBtn?.dataset.range || '';
 
             recordsList.innerHTML = records.map(record => `
                 <div class="record-item ${record.type}">
@@ -1012,6 +1019,25 @@
             // 这里暂时使用当前页记录数
             const totalPages = Math.ceil(totalRecords / pageSize);
             updatePagination(currentPage, totalPages, totalRecords);
+
+            // 更新标题合计信息
+            updateRecordsSummary(records, currentType, currentRange);
+        }
+
+        // 更新标题中的合计信息
+        function updateRecordsSummary(records, currentType, currentRange) {
+            const summaryEl = document.getElementById('recordsSummary');
+            if (!summaryEl) return;
+
+            if (currentType === 'expense' && currentRange === '30') {
+                const totalExpense = records
+                    .filter(r => r.type === 'expense')
+                    .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+
+                summaryEl.textContent = `（前30天支出合计: ¥${totalExpense.toFixed(2)}）`;
+            } else {
+                summaryEl.textContent = '';
+            }
         }
 
         // 更新分页信息
