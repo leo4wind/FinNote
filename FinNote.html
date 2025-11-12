@@ -144,6 +144,41 @@
             font-size: 14px;
         }
 
+        /* 类型按钮组 */
+        .type-button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            color: #495057;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .type-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .type-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .type-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
         .records-section {
             padding: 30px;
         }
@@ -486,21 +521,27 @@
                         <input type="date" id="endDate">
                     </div>
                     <div class="form-group">
-                        <label for="searchType">类型</label>
-                        <select id="searchType">
-                            <option value="">全部</option>
-                            <option value="income">收入</option>
-                            <option value="expense" selected>支出</option>
-                        </select>
+                        <label>类型</label>
+                        <div class="type-button-group">
+                            <button type="button" class="btn type-btn" data-type="">全部</button>
+                            <button type="button" class="btn type-btn" data-type="income">收入</button>
+                            <button type="button" class="btn type-btn active" data-type="expense">支出</button>
+                        </div>
                     </div>
+                    <!-- 注释掉备注关键词搜索 -->
+                    <!--
                     <div class="form-group">
                         <label for="searchRemark">备注关键词</label>
                         <input type="text" id="searchRemark" placeholder="模糊搜索">
                     </div>
+                    -->
                 </div>
                 <div class="form-actions" style="margin-top: 15px;">
+                    <!-- 注释掉搜索和重置按钮 -->
+                    <!--
                     <button type="submit" class="btn btn-primary">搜索</button>
                     <button type="button" class="btn btn-secondary" id="resetBtn">重置</button>
+                    -->
                     <button type="button" class="btn btn-primary desktop-only" id="desktopAddBtn">+ 添加记录</button>
                 </div>
             </form>
@@ -950,15 +991,17 @@
 
             // 获取搜索条件
             searchParams = {};
-            const type = document.getElementById('searchType').value;
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const remark = document.getElementById('searchRemark').value;
+            const activeTypeBtn = document.querySelector('.type-btn.active');
+            const type = activeTypeBtn?.dataset.type || '';
+            const startDate = document.getElementById('startDate')?.value;
+            const endDate = document.getElementById('endDate')?.value;
+            // 注释掉备注关键词搜索
+            // const remark = document.getElementById('searchRemark').value;
 
             if (type) searchParams.type = type;
             if (startDate) searchParams.start_date = startDate;
             if (endDate) searchParams.end_date = endDate;
-            if (remark) searchParams.remark = remark;
+            // if (remark) searchParams.remark = remark;
 
             currentPage = 1; // 重置到第一页
             await loadRecords();
@@ -967,8 +1010,12 @@
 
         // 重置搜索
         resetBtn.addEventListener('click', async () => {
-            document.getElementById('searchType').value = '';
-            document.getElementById('searchRemark').value = '';
+            // 重置类型按钮组
+            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.type-btn[data-type=""]').classList.add('active');
+
+            // 注释掉备注关键词重置
+            // document.getElementById('searchRemark').value = '';
             setDefaultSearchDates(); // 恢复默认日期
             searchParams = {};
             currentPage = 1;
@@ -976,25 +1023,33 @@
             await loadSummary();
         });
 
-        // 类型选择自动搜索（特别针对移动端）
-        document.getElementById('searchType').addEventListener('change', async (e) => {
-            e.preventDefault();
+        // 类型按钮点击事件
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
 
-            // 获取搜索条件
-            searchParams = {};
-            const type = e.target.value;
-            const startDate = document.getElementById('startDate')?.value;
-            const endDate = document.getElementById('endDate')?.value;
-            const remark = document.getElementById('searchRemark').value;
+                // 移除所有按钮的active类
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                // 为当前点击的按钮添加active类
+                e.target.classList.add('active');
 
-            if (type) searchParams.type = type;
-            if (startDate) searchParams.start_date = startDate;
-            if (endDate) searchParams.end_date = endDate;
-            if (remark) searchParams.remark = remark;
+                // 获取搜索条件
+                searchParams = {};
+                const type = e.target.dataset.type;
+                const startDate = document.getElementById('startDate')?.value;
+                const endDate = document.getElementById('endDate')?.value;
+                // 注释掉备注关键词搜索
+                // const remark = document.getElementById('searchRemark').value;
 
-            currentPage = 1; // 重置到第一页
-            await loadRecords();
-            await loadSummary();
+                if (type) searchParams.type = type;
+                if (startDate) searchParams.start_date = startDate;
+                if (endDate) searchParams.end_date = endDate;
+                // if (remark) searchParams.remark = remark;
+
+                currentPage = 1; // 重置到第一页
+                await loadRecords();
+                await loadSummary();
+            });
         });
 
         // 分页按钮
@@ -1027,15 +1082,17 @@
             // 使用setTimeout确保DOM更新完成
             setTimeout(() => {
                 // 从UI读取默认值并更新searchParams
-                const type = document.getElementById('searchType').value;
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
-                const remark = document.getElementById('searchRemark').value;
+                const activeTypeBtn = document.querySelector('.type-btn.active');
+                const type = activeTypeBtn?.dataset.type || 'expense'; // 默认选择支出
+                const startDate = document.getElementById('startDate')?.value;
+                const endDate = document.getElementById('endDate')?.value;
+                // 注释掉备注关键词搜索
+                // const remark = document.getElementById('searchRemark').value;
 
                 if (type) searchParams.type = type;
                 if (startDate) searchParams.start_date = startDate;
                 if (endDate) searchParams.end_date = endDate;
-                if (remark) searchParams.remark = remark;
+                // if (remark) searchParams.remark = remark;
 
                 console.log('默认搜索参数:', searchParams);
                 loadRecords();
