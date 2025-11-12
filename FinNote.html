@@ -979,13 +979,17 @@
             });
         };
 
-        // 搜索表单事件
+        // 注释掉搜索表单相关事件（已移除搜索和重置按钮）
+        /*
         const searchForm = document.getElementById('searchForm');
         const resetBtn = document.getElementById('resetBtn');
+        */
+
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
 
-        // 搜索提交
+        // 搜索提交（已注释）
+        /*
         searchForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -1007,8 +1011,10 @@
             await loadRecords();
             await loadSummary();
         });
+        */
 
-        // 重置搜索
+        // 重置搜索（已注释）
+        /*
         resetBtn.addEventListener('click', async () => {
             // 重置类型按钮组
             document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
@@ -1022,6 +1028,7 @@
             await loadRecords();
             await loadSummary();
         });
+        */
 
         // 类型按钮点击事件
         document.querySelectorAll('.type-btn').forEach(btn => {
@@ -1053,19 +1060,23 @@
         });
 
         // 分页按钮
-        prevBtn.addEventListener('click', async () => {
-            if (currentPage > 1) {
-                currentPage--;
+        if (prevBtn) {
+            prevBtn.addEventListener('click', async () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    await loadRecords();
+                    await loadSummary();
+                }
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', async () => {
+                currentPage++;
                 await loadRecords();
                 await loadSummary();
-            }
-        });
-
-        nextBtn.addEventListener('click', async () => {
-            currentPage++;
-            await loadRecords();
-            await loadSummary();
-        });
+            });
+        }
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', () => {
