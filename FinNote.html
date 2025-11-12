@@ -152,7 +152,7 @@
 
         .type-btn {
             flex: 1;
-            padding: 12px 16px;
+            padding: 14px 20px;
             border: 2px solid #e9ecef;
             border-radius: 8px;
             background: white;
@@ -161,6 +161,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s;
+            min-width: 80px;
         }
 
         .type-btn:hover {
@@ -177,6 +178,42 @@
         .type-btn:focus {
             outline: none;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        /* 时间范围按钮样式 */
+        .time-range-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            color: #495057;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 80px;
+        }
+
+        .time-range-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .time-range-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .time-range-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        /* 让指定表单组独占一行 */
+        .form-group.full-width {
+            grid-column: 1 / -1;
         }
 
         .records-section {
@@ -480,6 +517,46 @@
             #confirmModal .form-actions {
                 padding: 15px 20px;
             }
+
+            /* 移动端分页优化 */
+            .pagination {
+                gap: 8px;
+                flex-wrap: nowrap;
+            }
+
+            .pagination-info {
+                font-size: 14px;
+                margin: 0 8px;
+                white-space: nowrap;
+            }
+
+            .page-btn {
+                padding: 8px 14px;
+                font-size: 14px;
+                min-width: 40px;
+                background: #667eea;
+                color: white;
+                border: 1px solid #667eea;
+            }
+
+            .page-btn:hover:not(:disabled) {
+                background: #5568d3;
+                border-color: #5568d3;
+            }
+
+            .page-btn:disabled {
+                background: #f8f9fa;
+                color: #6c757d;
+                border-color: #e9ecef;
+            }
+
+            /* 移动端按钮优化 */
+            .type-btn,
+            .time-range-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+                min-width: 70px;
+            }
         }
 
         /* 桌面端样式 */
@@ -520,7 +597,7 @@
                         <label for="endDate">结束日期</label>
                         <input type="date" id="endDate">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group full-width">
                         <label>类型</label>
                         <div class="type-button-group">
                             <button type="button" class="btn type-btn" data-type="">全部</button>
@@ -528,6 +605,15 @@
                             <button type="button" class="btn type-btn active" data-type="expense">支出</button>
                         </div>
                     </div>
+
+                    <div class="form-group full-width">
+                        <label>时间范围</label>
+                        <div class="type-button-group">
+                            <button type="button" class="btn time-range-btn active" data-range="30">前30天</button>
+                            <button type="button" class="btn time-range-btn" data-range="all">所有</button>
+                        </div>
+                    </div>
+
                     <!-- 注释掉备注关键词搜索 -->
                     <!--
                     <div class="form-group">
@@ -941,7 +1027,7 @@
             }
 
             pagination.classList.remove('hidden');
-            pageInfo.textContent = `第 ${page} 页，共 ${totalPages} 页，共 ${total} 条记录`;
+            pageInfo.textContent = `${page}/${totalPages} (${total})`;
 
             prevBtn.disabled = page <= 1;
             nextBtn.disabled = page >= totalPages;
@@ -1020,6 +1106,10 @@
             document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.type-btn[data-type=""]').classList.add('active');
 
+            // 重置时间范围按钮组
+            document.querySelectorAll('.time-range-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.time-range-btn[data-range="30"]').classList.add('active');
+
             // 注释掉备注关键词重置
             // document.getElementById('searchRemark').value = '';
             setDefaultSearchDates(); // 恢复默认日期
@@ -1030,32 +1120,75 @@
         });
         */
 
+        // 执行搜索的通用函数
+        async function performSearch() {
+            searchParams = {};
+
+            // 获取类型选择
+            const activeTypeBtn = document.querySelector('.type-btn.active');
+            const type = activeTypeBtn?.dataset.type || '';
+            if (type) searchParams.type = type;
+
+            // 获取时间范围选择
+            const activeRangeBtn = document.querySelector('.time-range-btn.active');
+            const range = activeRangeBtn?.dataset.range || '30';
+
+            // 根据时间范围设置日期
+            if (range === '30') {
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                const formatDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                searchParams.start_date = formatDate(thirtyDaysAgo);
+                searchParams.end_date = formatDate(tomorrow);
+            }
+            // 如果选择"所有"，则不设置日期范围，让后端返回所有数据
+
+            // 注释掉备注关键词搜索
+            // const remark = document.getElementById('searchRemark').value;
+            // if (remark) searchParams.remark = remark;
+
+            currentPage = 1; // 重置到第一页
+            await loadRecords();
+            await loadSummary();
+        }
+
         // 类型按钮点击事件
         document.querySelectorAll('.type-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
 
-                // 移除所有按钮的active类
+                // 移除所有类型按钮的active类
                 document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
                 // 为当前点击的按钮添加active类
                 e.target.classList.add('active');
 
-                // 获取搜索条件
-                searchParams = {};
-                const type = e.target.dataset.type;
-                const startDate = document.getElementById('startDate')?.value;
-                const endDate = document.getElementById('endDate')?.value;
-                // 注释掉备注关键词搜索
-                // const remark = document.getElementById('searchRemark').value;
+                // 执行搜索
+                await performSearch();
+            });
+        });
 
-                if (type) searchParams.type = type;
-                if (startDate) searchParams.start_date = startDate;
-                if (endDate) searchParams.end_date = endDate;
-                // if (remark) searchParams.remark = remark;
+        // 时间范围按钮点击事件
+        document.querySelectorAll('.time-range-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
 
-                currentPage = 1; // 重置到第一页
-                await loadRecords();
-                await loadSummary();
+                // 移除所有时间范围按钮的active类
+                document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                // 为当前点击的按钮添加active类
+                e.target.classList.add('active');
+
+                // 执行搜索
+                await performSearch();
             });
         });
 
@@ -1087,27 +1220,11 @@
             confirmModal.style.display = 'none';
             console.log('页面加载完成，模态框已隐藏');
 
-            // 设置默认查询条件
-            setDefaultSearchDates();
-
             // 使用setTimeout确保DOM更新完成
             setTimeout(() => {
-                // 从UI读取默认值并更新searchParams
-                const activeTypeBtn = document.querySelector('.type-btn.active');
-                const type = activeTypeBtn?.dataset.type || 'expense'; // 默认选择支出
-                const startDate = document.getElementById('startDate')?.value;
-                const endDate = document.getElementById('endDate')?.value;
-                // 注释掉备注关键词搜索
-                // const remark = document.getElementById('searchRemark').value;
-
-                if (type) searchParams.type = type;
-                if (startDate) searchParams.start_date = startDate;
-                if (endDate) searchParams.end_date = endDate;
-                // if (remark) searchParams.remark = remark;
-
-                console.log('默认搜索参数:', searchParams);
-                loadRecords();
-                loadSummary();
+                // 直接执行默认搜索（类型：支出，时间范围：前30天）
+                console.log('执行默认搜索');
+                performSearch();
             }, 0);
 
             // 健康检查
